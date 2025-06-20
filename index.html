@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="orange_shulker.png" type="image/png" />
+  <title>Home Base</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #1e1e1e;
+      color: #eee;
+      font-family: 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    form {
+      position: relative;
+      display: flex;
+      gap: 10px;
+      width: 320px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-family: 'Outfit', sans-serif;
+      outline-offset: 2px;
+    }
+
+    input[type="submit"] {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #ff6f3c;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background: #e55b2b;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 45px; /* just below the input */
+      left: 0;
+      right: 0;
+      background: #2e2e2e;
+      border-radius: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+      z-index: 10;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      color: #eee;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: #ff6f3c;
+      color: white;
+    }
+
+    .links {
+      margin-top: 30px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .links a {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .links a img {
+      height: 32px;
+      width: auto;
+      filter: drop-shadow(0 0 1px #000);
+      display: block;
+    }
+
+    .links a:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome back.</h1>
+
+  <form action="https://www.google.com/search" method="GET" target="_blank" autocomplete="off" novalidate>
+    <input type="text" name="q" placeholder="Search Google..." autocomplete="off" />
+    <input type="submit" value="Go" />
+    <div class="autocomplete-list" hidden></div>
+  </form>
+
+  <div class="links">
+    <a href="https://mail.google.com" target="_blank" title="Gmail">
+      <img src="gmail.png" alt="Gmail" />
+    </a>
+    <a href="https://reddit.com" target="_blank" title="Reddit">
+      <img src="reddit.png" alt="Reddit" />
+    </a>
+    <a href="https://youtube.com" target="_blank" title="YouTube">
+      <img src="youtube.png" alt="YouTube" />
+    </a>
+    <a href="https://github.com" target="_blank" title="GitHub">
+      <img src="github.png" alt="GitHub" />
+    </a>
+    <a href="https://chatgpt.com/?model=auto" target="_blank" title="ChatGPT">
+      <img src="chatgpt.png" alt="ChatGPT" />
+    </a>
+  </div>
+
+  <script>
+    (() => {
+      const form = document.querySelector('form');
+      const input = form.querySelector('input[type="text"]');
+      const submitBtn = form.querySelector('input[type="submit"]');
+      const autocompleteList = form.querySelector('.autocomplete-list');
+
+      const suggestions = ['Google', 'Gmail', 'GitHub', 'YouTube', 'Reddit', 'ChatGPT'];
+
+      let currentFocus = -1;
+
+      // Show suggestions below input
+      input.addEventListener('input', () => {
+        const val = input.value.trim().toLowerCase();
+        autocompleteList.innerHTML = '';
+        currentFocus = -1;
+
+        if (!val) {
+          autocompleteList.hidden = true;
+          return;
+        }
+
+        const filtered = suggestions.filter(s => s.toLowerCase().includes(val));
+        if (filtered.length === 0) {
+          autocompleteList.hidden = true;
+          return;
+        }
+
+        filtered.forEach(s => {
+          const item = document.createElement('div');
+          item.textContent = s;
+          item.classList.add('autocomplete-item');
+          item.addEventListener('click', () => {
+            input.value = s;
+            autocompleteList.hidden = true;
+            input.focus();
+          });
+          autocompleteList.appendChild(item);
+        });
+
+        autocompleteList.hidden = false;
+      });
+
+      // Keyboard navigation
+      input.addEventListener('keydown', (e) => {
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        if (autocompleteList.hidden) return;
+
+        if (e.key === 'ArrowDown') {
+          currentFocus++;
+          if (currentFocus >= items.length) currentFocus = 0;
+          setActive(items, currentFocus);
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          currentFocus--;
+          if (currentFocus < 0) currentFocus = items.length - 1;
+          setActive(items, currentFocus);
+          e.preventDefault();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (currentFocus > -1) {
+            items[currentFocus].click();
+          } else if (input.value.trim() === '') {
+            alert('Please enter a search term.');
+          } else {
+            form.submit();
+          }
+        }
+      });
+
+      function setActive(items, index) {
+        items.forEach(i => i.classList.remove('active'));
+        if (items[index]) items[index].classList.add('active');
+      }
+
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!form.contains(e.target)) {
+          autocompleteList.hidden = true;
+        }
+      });
+
+      // Validate on submit
+      form.addEventListener('submit', (e) => {
+        if (input.value.trim() === '') {
+          e.preventDefault();
+          alert('Please enter a search term.');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
